@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Color Palet With TailwindCSS & AlpineJS</title>
+      <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+      <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+      <style>
+            ::-webkit-scrollbar {
+                  width: 14px;
+                  height: 14px;
+            }
+            ::-webkit-scrollbar-track {
+                  background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                  background: rgba(55, 65, 81, 1);
+                  border-radius: 50px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                  background: rgba(17, 24, 39, 1);
+            }
+      </style>
+</head>
+<body class="font-sans antialiased bg-gray-100">
+      
+      <div x-data="colorPalet" class="container px-10 mx-auto mt-8 text-gray-900">
+            <!-- Title -->
+            <h2 class="text-lg font-bold tracking-wider text-center md:text-xl lg:text-2xl">Color Palet With Tailwind & Alpine</h2>
+            <!-- Grid Color Palet -->
+            <div class="grid grid-cols-1 gap-2 mt-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+                  <template x-for="(data, index) in listPalet" :key="index">
+                        <div x-bind:style="{backgroundColor: data.hex}" class="relative flex flex-row items-center p-4 rounded shadow">
+                              <div class="w-1/12">
+                                    <!-- Lock -->
+                                    <svg x-show="data.status" @click="toggleLock(index)" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-4 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <!-- Unlock -->
+                                    <svg x-show="!data.status" @click="toggleLock(index)" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+                                          <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
+                                    </svg>
+                              </div>
+                              <!-- Code Hex -->
+                              <span @click="copy(data.hex)" x-text="data.hex" class="w-full text-xl font-bold tracking-wide text-center text-gray-100 cursor-pointer"></span>
+                              <!-- Favorit -->
+                              <svg @click="toggleFavorit(index)" :class="data.favorit ? 'text-red-500' : 'text-white' " class="absolute w-6 h-6 cursor-pointer top-1 right-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                              </svg>
+                        </div>
+                  </template>
+            </div>
+            <!-- Button Generate -->
+            <button @click="generate" class="block w-24 h-24 mx-auto mt-6 font-semibold tracking-wide text-center text-white bg-purple-400 rounded-full shadow outline-none">Generate</button>
+            <!-- List of favorite -->
+            <div class="grid grid-cols-4 gap-2 mt-5 md:grid-cols-7 lg:grid-cols-12 mb-7">
+                  <template x-for="(data, index) in favoritColor" :key="index">
+                        <div class="relative text-center">
+                              <div x-bind:style="{backgroundColor: data}" aria-hidden="true" class="absolute inset-0 rounded-full"></div>
+                              <span x-text="data" @click="copy(data)" class="relative font-semibold tracking-wide text-gray-100 cursor-pointer"></span>
+                        </div>
+                  </template>
+            </div>
+            <!-- Alert -->
+            <div x-show="alert.status" class="fixed right-2 bottom-2" style="display: none">
+                  <div class="w-96">
+                        <div :style="{backgroundColor: alert.color}" class="w-full p-2 text-white rounded shadow">
+                              <span x-text="alert.msg" class="font-semibold tracking-wide"></span>
+                        </div>
+                  </div>
+            </div>
+      </div>
+
+      <script defer>
+            document.addEventListener('alpine:init', () => {
+                  Alpine.data('colorPalet', () => ({
+                        listPalet: [],
+                        favoritColor: [],
+                        alert: {
+                              status: false,
+                              color: '',
+                              msg: ''
+                        },
+                        init() {
+                              // Watch aler if condition true showing alert
+                              this.$watch('alert.status', (val) => {
+                                    if(val)
+                                          setTimeout(() => {
+                                                this.alert.status = false
+                                                this.alert.color = ''
+                                                this.alert.msg = ''
+                                          }, 3000)
+                              })
+                              // Set favorit color
+                              this.favoritColor = localStorage.getItem('favorit-color-palet')
+                                    ? JSON.parse(localStorage.getItem('favorit-color-palet'))
+                                    : []
+                              // Checking color on localstore
+                              if(localStorage.getItem('color-palet-jta') && localStorage.getItem('color-palet-jta') !== '[]') {
+                                    // Get list of color palet by localstore if exist
+                                    this.listPalet = JSON.parse(localStorage.getItem('color-palet-jta'))
+                              }else {
+                                    // Looping color palet if does'n exist on localstorage
+                                    for (let i = 0; i < 12; i++) {
+                                          this.listPalet.push({
+                                                hex: this.genPalet(),
+                                                status: false,
+                                                favorit: false
+                                          })
+                                    }
+                                    // Set generate color on localstorage
+                                    localStorage.setItem('color-palet-jta', JSON.stringify(this.listPalet))
+                              }
+                        },
+                        genPalet() {
+                              // Code for hex color
+                              const code = '0123456789ABCDEF'
+                              let hexCode = '#'
+                              for (let i = 0; i < 6; i++) {
+                                    // Adding new string of hexcode variable
+                                    hexCode += code[Math.floor(Math.random() * 16)]
+                              }
+
+                              return hexCode
+                        },
+                        setPalet(hex, index) {
+                              // Change palet color by index
+                              this.listPalet[index].hex = hex
+                              // Save palet into localstorage
+                              this.savePalet()
+                        },
+                        toggleLock(index) {
+                              // Change status lock or unlock color
+                              this.listPalet[index].status = !this.listPalet[index].status
+                              this.savePalet()
+                        },
+                        generate() {
+                              // Looping list of palet if status lock is false
+                              this.listPalet.forEach((data, index) => {
+                                    if(!data.status) {
+                                          this.setPalet(this.genPalet(), index)
+                                    }
+                              })
+                              this.savePalet()
+                        },
+                        copy(text) {
+                              navigator.clipboard.writeText(text)
+                              this.alert.color = text
+                              this.alert.status = true
+                              this.alert.msg = 'Success to copy color palet.'
+                        },
+                        savePalet() {
+                              // Save palet color into localstorage
+                              localStorage.setItem('color-palet-jta', JSON.stringify(this.listPalet))
+                        },
+                        toggleFavorit(index) {
+                              this.listPalet[index].favorit = !this.listPalet[index].favorit
+                              this.savePalet()
+                              if(this.listPalet[index].favorit) {
+                                    this.saveFavorit(this.listPalet[index].hex)
+                                    // Add favorit color alert
+                                    this.alert.color = this.listPalet[index].hex
+                                    this.alert.status = true
+                                    this.alert.msg = 'Success add to favorit color palet.'
+                              }
+                        },
+                        saveFavorit(hex) {
+                              if(this.favoritColor.indexOf(hex) == -1) {
+                                    // Adding new hexcode if does't exist of list
+                                    this.favoritColor.push(hex)
+                                    // Set favorit color into localstorage
+                                    localStorage.setItem('favorit-color-palet', JSON.stringify(this.favoritColor))
+                              }
+                        }
+                  }));
+            })
+      </script>
+</body>
+</html>
